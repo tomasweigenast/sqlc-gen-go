@@ -6,8 +6,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/sqlc-dev/sqlc-gen-go/internal/opts"
 	"github.com/sqlc-dev/plugin-sdk-go/plugin"
+	"github.com/sqlc-dev/sqlc-gen-go/internal/opts"
 )
 
 type Field struct {
@@ -41,14 +41,22 @@ func TagsToString(tags map[string]string) string {
 	return strings.Join(tagParts, " ")
 }
 
-func JSONTagName(name string, options *opts.Options) string {
+func JSONTagName(name, gotype string, options *opts.Options) string {
 	style := options.JsonTagsCaseStyle
 	idUppercase := options.JsonTagsIdUppercase
+	var tag string
+
 	if style == "" || style == "none" {
-		return name
+		tag = name
 	} else {
-		return SetJSONCaseStyle(name, style, idUppercase)
+		tag = SetJSONCaseStyle(name, style, idUppercase)
 	}
+
+	if gotype == "int64" || gotype == "*int64" {
+		tag += ",string"
+	}
+
+	return tag
 }
 
 func SetCaseStyle(name string, style string) string {

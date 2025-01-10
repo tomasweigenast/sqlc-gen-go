@@ -6,11 +6,11 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/sqlc-dev/sqlc-gen-go/internal/opts"
-	"github.com/sqlc-dev/plugin-sdk-go/sdk"
-	"github.com/sqlc-dev/sqlc-gen-go/internal/inflection"
 	"github.com/sqlc-dev/plugin-sdk-go/metadata"
 	"github.com/sqlc-dev/plugin-sdk-go/plugin"
+	"github.com/sqlc-dev/plugin-sdk-go/sdk"
+	"github.com/sqlc-dev/sqlc-gen-go/internal/inflection"
+	"github.com/sqlc-dev/sqlc-gen-go/internal/opts"
 )
 
 func buildEnums(req *plugin.GenerateRequest, options *opts.Options) []Enum {
@@ -34,8 +34,8 @@ func buildEnums(req *plugin.GenerateRequest, options *opts.Options) []Enum {
 				ValidTags: map[string]string{},
 			}
 			if options.EmitJsonTags {
-				e.NameTags["json"] = JSONTagName(enumName, options)
-				e.ValidTags["json"] = JSONTagName("valid", options)
+				e.NameTags["json"] = JSONTagName(enumName, "", options)
+				e.ValidTags["json"] = JSONTagName("valid", "", options)
 			}
 
 			seen := make(map[string]struct{}, len(enum.Vals))
@@ -86,17 +86,18 @@ func buildStructs(req *plugin.GenerateRequest, options *opts.Options) []Struct {
 				Comment: table.Comment,
 			}
 			for _, column := range table.Columns {
+				gotype := goType(req, options, column)
 				tags := map[string]string{}
 				if options.EmitDbTags {
 					tags["db"] = column.Name
 				}
 				if options.EmitJsonTags {
-					tags["json"] = JSONTagName(column.Name, options)
+					tags["json"] = JSONTagName(column.Name, gotype, options)
 				}
 				addExtraGoStructTags(tags, req, options, column)
 				s.Fields = append(s.Fields, Field{
 					Name:    StructName(column.Name, options),
-					Type:    goType(req, options, column),
+					Type:    gotype,
 					Tags:    tags,
 					Comment: column.Comment,
 				})
@@ -382,25 +383,31 @@ func columnsToStruct(req *plugin.GenerateRequest, options *opts.Options, name st
 			tagName = fmt.Sprintf("%s_%d", tagName, suffix)
 			fieldName = fmt.Sprintf("%s_%d", fieldName, suffix)
 		}
+
+		var gotype string
+		var embedFields []Field
+		if c.embed == nil {
+			gotype = goType(req, options, c.Column)
+		} else {
+			gotype = c.embed.modelType
+			embedFields = c.embed.fields
+		}
+
 		tags := map[string]string{}
 		if options.EmitDbTags {
 			tags["db"] = tagName
 		}
 		if options.EmitJsonTags {
-			tags["json"] = JSONTagName(tagName, options)
+			tags["json"] = JSONTagName(tagName, gotype, options)
 		}
 		addExtraGoStructTags(tags, req, options, c.Column)
 		f := Field{
-			Name:   fieldName,
-			DBName: colName,
-			Tags:   tags,
-			Column: c.Column,
-		}
-		if c.embed == nil {
-			f.Type = goType(req, options, c.Column)
-		} else {
-			f.Type = c.embed.modelType
-			f.EmbedFields = c.embed.fields
+			Name:        fieldName,
+			DBName:      colName,
+			Tags:        tags,
+			Column:      c.Column,
+			EmbedFields: embedFields,
+			Type:        gotype,
 		}
 
 		gs.Fields = append(gs.Fields, f)

@@ -5,10 +5,10 @@ import (
 	"log"
 	"strings"
 
-	"github.com/sqlc-dev/sqlc-gen-go/internal/opts"
+	"github.com/sqlc-dev/plugin-sdk-go/plugin"
 	"github.com/sqlc-dev/plugin-sdk-go/sdk"
 	"github.com/sqlc-dev/sqlc-gen-go/internal/debug"
-	"github.com/sqlc-dev/plugin-sdk-go/plugin"
+	"github.com/sqlc-dev/sqlc-gen-go/internal/opts"
 )
 
 func parseIdentifierString(name string) (*plugin.Identifier, error) {
@@ -577,10 +577,14 @@ func postgresType(req *plugin.GenerateRequest, options *opts.Options, col *plugi
 						}
 						return StructName(schema.Name+"_"+enum.Name, options)
 					} else {
-						if schema.Name == req.Catalog.DefaultSchema {
-							return "Null" + StructName(enum.Name, options)
+						nullPrefix := "Null"
+						if emitPointersForNull {
+							nullPrefix = "*"
 						}
-						return "Null" + StructName(schema.Name+"_"+enum.Name, options)
+						if schema.Name == req.Catalog.DefaultSchema {
+							return nullPrefix + StructName(enum.Name, options)
+						}
+						return nullPrefix + StructName(schema.Name+"_"+enum.Name, options)
 					}
 				}
 			}
