@@ -52,7 +52,7 @@ func JSONTagName(name, gotype string, options *opts.Options) string {
 		tag = SetJSONCaseStyle(name, style, idUppercase)
 	}
 
-	if gotype == "int64" || gotype == "*int64" {
+	if (gotype == "int64" || gotype == "*int64") && options.JsonTagsInt64String {
 		tag += ",string"
 	}
 

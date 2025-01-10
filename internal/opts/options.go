@@ -13,6 +13,7 @@ type Options struct {
 	EmitInterface               bool              `json:"emit_interface" yaml:"emit_interface"`
 	EmitJsonTags                bool              `json:"emit_json_tags" yaml:"emit_json_tags"`
 	JsonTagsIdUppercase         bool              `json:"json_tags_id_uppercase" yaml:"json_tags_id_uppercase"`
+	JsonTagsInt64String         bool              `json:"json_tags_int64_string" yaml:"json_tags_int64_string"`
 	EmitDbTags                  bool              `json:"emit_db_tags" yaml:"emit_db_tags"`
 	EmitPreparedQueries         bool              `json:"emit_prepared_queries" yaml:"emit_prepared_queries"`
 	EmitExactTableNames         bool              `json:"emit_exact_table_names,omitempty" yaml:"emit_exact_table_names"`
